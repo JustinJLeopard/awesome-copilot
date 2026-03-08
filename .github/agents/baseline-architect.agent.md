@@ -1,6 +1,6 @@
 ---
-name: baseline-architect
-description: Creates and refines repository customization baselines for cross-surface AI-native development tools
+name: Baseline Architect
+description: 'Creates and refines repository customization baselines for cross-surface AI-native development tools.'
 tools: ["read", "search", "edit"]
 ---
 

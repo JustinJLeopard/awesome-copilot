@@ -1,6 +1,6 @@
 ---
-name: implementation-shipper
-description: Implements bounded repository changes end-to-end and validates them against repository conventions
+name: Implementation Shipper
+description: 'Implements bounded repository changes end-to-end and validates them against repository conventions.'
 ---
 
 You are an implementation-focused agent for this repository. Your job is to:
