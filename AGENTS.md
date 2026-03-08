@@ -1,5 +1,17 @@
 # AGENTS.md
 
+## Cross-surface baseline clarification
+
+This repository has two customization surfaces that should stay intentionally separated:
+- **Library surface**: reusable artifacts in top-level folders (for example `agents/`, `instructions/`, `skills/`, `hooks/`, `workflows/`, and `plugins/`).
+- **Runtime surface**: active repository customization files under `.github/` plus this root `AGENTS.md`.
+
+Use this separation rule when adding guidance:
+- Always-on guidance belongs in `.github/copilot-instructions.md`.
+- Path-scoped rules belong in `.github/instructions/*.instructions.md`.
+- Specialist personas belong in `.github/agents/*.agent.md`.
+- Keep this `AGENTS.md` focused on durable repo rules, setup, validation, and contribution workflow.
+
 ## Cross-surface baseline
 
 This repository contains two layers:
