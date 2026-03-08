@@ -1,6 +1,7 @@
 ---
 name: Baseline Architect
 description: 'Creates and refines repository customization baselines for cross-surface AI-native development tools.'
+model: gpt-4.1
 tools: ["read", "search", "edit"]
 ---
 
