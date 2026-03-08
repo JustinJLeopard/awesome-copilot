@@ -12,18 +12,6 @@ Use this separation rule when adding guidance:
 - Specialist personas belong in `.github/agents/*.agent.md`.
 - Keep this `AGENTS.md` focused on durable repo rules, setup, validation, and contribution workflow.
 
-## Cross-surface baseline
-
-This repository contains two layers:
-1. Library resources in top-level folders such as agents/, instructions/, skills/, hooks/, workflows/, and plugins.
-2. Runtime customization files for this repository itself under .github/ plus this root AGENTS.md.
-
-When adding repository operating guidance:
-- Put always-on GitHub Copilot guidance in .github/copilot-instructions.md
-- Put scoped rules in .github/instructions/*.instructions.md
-- Put specialist agent personas in .github/agents/*.agent.md
-- Keep this AGENTS.md focused on durable repo rules, setup, validation, and contribution workflow
-
 ## Project Overview
 
 The Awesome GitHub Copilot repository is a community-driven collection of custom agents and instructions designed to enhance GitHub Copilot experiences across various domains, languages, and use cases. The project includes:
