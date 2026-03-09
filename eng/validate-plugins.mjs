@@ -10,7 +10,7 @@ const DEFAULT_PLUGINS_DIR = path.join(DEFAULT_ROOT_FOLDER, "plugins");
 const PATH_FIELDS = ["agents", "skills"];
 const LAYOUT_EXAMPLES = {
   agents: {
-    staged: "./agents/my-agent.md",
+    staged: "./agents/my-agent.agent.md",
     main: "./agents",
   },
   skills: {
@@ -95,6 +95,9 @@ function classifySpecPath(field, relPath) {
   }
 
   if (field === "agents") {
+    if (relPath.startsWith("./agents/") && relPath.endsWith(".agent.md")) {
+      return relPath.length > "./agents/.agent.md".length ? "staged" : null;
+    }
     if (relPath.startsWith("./agents/") && relPath.endsWith(".md")) {
       return relPath.length > "./agents/.md".length ? "staged" : null;
     }
@@ -149,11 +152,14 @@ function findMarkdownFile(dirPath) {
 
 function validateStagedEntry(field, index, relPath, rootFolder, errors) {
   if (field === "agents") {
-    const basename = relPath.slice("./agents/".length, -".md".length);
-    const srcFile = path.join(rootFolder, "agents", `${basename}.agent.md`);
+    const relAgentPath = relPath.slice("./agents/".length);
+    const normalizedAgentPath = relAgentPath.endsWith(".agent.md")
+      ? relAgentPath
+      : `${relAgentPath.slice(0, -".md".length)}.agent.md`;
+    const srcFile = path.join(rootFolder, "agents", normalizedAgentPath);
     if (!fs.existsSync(srcFile)) {
       errors.push(
-        `${field}[${index}] source not found: ${toDisplayPath(path.join("agents", `${basename}.agent.md`))}`
+        `${field}[${index}] source not found: ${toDisplayPath(path.relative(rootFolder, srcFile))}`
       );
     }
     return;
