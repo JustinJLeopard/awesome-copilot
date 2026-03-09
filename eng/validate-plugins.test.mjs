@@ -32,18 +32,25 @@ test("rejects staged manifests with missing repo-root source files", () => {
   const errors = validatePlugin("test-plugin", getFixtureOptions("missing-staged-source"));
 
   assert.equal(errors.length, 1);
-  assert.match(errors[0], /agents\[0\] source not found: agents\/example\.agent\.md/);
+  assert.match(errors[0], /agents\[0\] source not found: agents[/\\]example\.agent\.md/);
 });
 
 test("rejects main manifests with missing materialized plugin files", () => {
   const errors = validatePlugin("test-plugin", getFixtureOptions("missing-main-materialized"));
 
   assert.equal(errors.length, 1);
-  assert.match(errors[0], /skills\[0\] materialized source not found: plugins\/test-plugin\/skills\/example-skill\/SKILL\.md/);
+  assert.match(errors[0], /skills\[0\] materialized source not found: plugins[/\\]test-plugin[/\\]skills[/\\]example-skill[/\\]SKILL\.md/);
 });
 
 test("rejects plugins that mix staged and main manifest layouts", () => {
   const errors = validatePlugin("test-plugin", getFixtureOptions("mixed-layout"));
+
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /mixes staged source paths and main materialized paths/);
+});
+
+test("rejects plugins that mix staged and main manifest layouts (reversed order)", () => {
+  const errors = validatePlugin("test-plugin", getFixtureOptions("mixed-layout-reversed"));
 
   assert.equal(errors.length, 1);
   assert.match(errors[0], /mixes staged source paths and main materialized paths/);

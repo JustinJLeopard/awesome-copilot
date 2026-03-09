@@ -99,6 +99,9 @@ function classifySpecPath(field, relPath) {
       return relPath.length > "./agents/.agent.md".length ? "staged" : null;
     }
     if (relPath.startsWith("./agents/") && relPath.endsWith(".md")) {
+      if (/\/\*\.([\w.]+)$/.test(relPath)) {
+        return "main";
+      }
       return relPath.length > "./agents/.md".length ? "staged" : null;
     }
     if (relPath === "./agents") {
@@ -132,17 +135,17 @@ function getPathFormatError(field, index) {
   return `${field}[${index}] must use staged "${examples.staged}" or main "${examples.main}" path syntax`;
 }
 
-function findMarkdownFile(dirPath) {
+function findMarkdownFile(dirPath, suffix = ".md") {
   if (!fs.existsSync(dirPath)) {
     return false;
   }
 
   for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
     const fullPath = path.join(dirPath, entry.name);
-    if (entry.isFile() && entry.name.endsWith(".md")) {
+    if (entry.isFile() && entry.name.endsWith(suffix)) {
       return true;
     }
-    if (entry.isDirectory() && findMarkdownFile(fullPath)) {
+    if (suffix === ".md" && entry.isDirectory() && findMarkdownFile(fullPath)) {
       return true;
     }
   }
@@ -152,14 +155,14 @@ function findMarkdownFile(dirPath) {
 
 function validateStagedEntry(field, index, relPath, rootFolder, errors) {
   if (field === "agents") {
-    const relAgentPath = relPath.slice("./agents/".length);
-    const normalizedAgentPath = relAgentPath.endsWith(".agent.md")
-      ? relAgentPath
-      : `${relAgentPath.slice(0, -".md".length)}.agent.md`;
-    const srcFile = path.join(rootFolder, "agents", normalizedAgentPath);
+    const basename = relPath.slice("./agents/".length, -".md".length);
+    const agentFileName = basename.endsWith(".agent")
+      ? `${basename}.md`
+      : `${basename}.agent.md`;
+    const srcFile = path.join(rootFolder, "agents", agentFileName);
     if (!fs.existsSync(srcFile)) {
       errors.push(
-        `${field}[${index}] source not found: ${toDisplayPath(path.relative(rootFolder, srcFile))}`
+        `${field}[${index}] source not found: ${toDisplayPath(path.join("agents", agentFileName))}`
       );
     }
     return;
@@ -176,8 +179,13 @@ function validateStagedEntry(field, index, relPath, rootFolder, errors) {
 
 function validateMainEntry(field, index, relPath, pluginDir, rootFolder, errors) {
   if (field === "agents") {
-    const materializedDir = path.join(pluginDir, relPath.slice(2));
-    if (!findMarkdownFile(materializedDir)) {
+    // Support glob patterns like ./agents/*.agent.md — resolve dir and match suffix
+    const globMatch = relPath.match(/\/\*(\.([\w.]+))$/);
+    const isGlob = Boolean(globMatch);
+    const dirPart = isGlob ? relPath.slice(2, relPath.lastIndexOf("/")) : relPath.slice(2);
+    const suffix = isGlob ? globMatch[1] : ".md";
+    const materializedDir = path.join(pluginDir, dirPart);
+    if (!findMarkdownFile(materializedDir, suffix)) {
       errors.push(
         `${field}[${index}] materialized files not found: ${toDisplayPath(path.relative(rootFolder, materializedDir))}`
       );
