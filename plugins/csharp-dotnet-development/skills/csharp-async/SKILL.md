@@ -24,7 +24,7 @@ Your goal is to help me follow best practices for asynchronous programming in C#
 - Use try/catch blocks around await expressions
 - Avoid swallowing exceptions in async methods
 - Use `ConfigureAwait(false)` when appropriate to prevent deadlocks in library code
-- In `async` methods, throw exceptions normally (they will fault the returned `Task`); use `Task.FromException()` only from non-`async` methods that need to return a faulted `Task`
+- Propagate exceptions with `Task.FromException()` instead of throwing in async Task returning methods
 
 ## Performance
 
