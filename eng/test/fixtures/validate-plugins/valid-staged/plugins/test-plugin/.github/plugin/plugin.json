@@ -1,0 +1,11 @@
+{
+  "name": "test-plugin",
+  "description": "Valid staged fixture.",
+  "version": "1.0.0",
+  "agents": [
+    "./agents/example.md"
+  ],
+  "skills": [
+    "./skills/example-skill/"
+  ]
+}
