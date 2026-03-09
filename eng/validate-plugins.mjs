@@ -152,11 +152,14 @@ function findMarkdownFile(dirPath, suffix = ".md") {
 
 function validateStagedEntry(field, index, relPath, rootFolder, errors) {
   if (field === "agents") {
-    // relPath is like ./agents/example.agent.md — use it directly relative to rootFolder
-    const srcFile = path.join(rootFolder, relPath.slice(2));
+    const basename = relPath.slice("./agents/".length, -".md".length);
+    const agentFileName = basename.endsWith(".agent")
+      ? `${basename}.md`
+      : `${basename}.agent.md`;
+    const srcFile = path.join(rootFolder, "agents", agentFileName);
     if (!fs.existsSync(srcFile)) {
       errors.push(
-        `${field}[${index}] source not found: ${toDisplayPath(relPath.slice(2))}`
+        `${field}[${index}] source not found: ${toDisplayPath(path.join("agents", agentFileName))}`
       );
     }
     return;
