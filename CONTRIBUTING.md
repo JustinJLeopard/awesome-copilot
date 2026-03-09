@@ -126,6 +126,8 @@ plugins/my-plugin-id/
 ```
 
 > **Note:** Plugin content is defined declaratively in plugin.json using Claude Code spec fields (`agents`, `commands`, `skills`). Source files live in top-level directories and are materialized into plugins by CI.
+>
+> Author plugin manifests on `staged` using source paths like `./agents/my-agent.md` and `./skills/my-skill/`. After publish to `main`, CI rewrites those entries to materialized plugin-local paths like `./agents` and `./skills/my-skill`. Both layouts are intentional, and `npm run plugin:validate` accepts either shape.
 
 #### plugin.json example
 

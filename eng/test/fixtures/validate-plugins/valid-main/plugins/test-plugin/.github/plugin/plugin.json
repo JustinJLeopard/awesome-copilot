@@ -1,0 +1,11 @@
+{
+  "name": "test-plugin",
+  "description": "Valid main fixture.",
+  "version": "1.0.0",
+  "agents": [
+    "./agents"
+  ],
+  "skills": [
+    "./skills/example-skill"
+  ]
+}

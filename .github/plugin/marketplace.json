@@ -54,6 +54,12 @@
       "version": "1.0.0"
     },
     {
+      "name": "chat-app-justus",
+      "source": "chat-app-justus",
+      "description": "Starter plugin scaffold for the Chat-App-JustUs project.",
+      "version": "1.0.0"
+    },
+    {
       "name": "clojure-interactive-programming",
       "source": "clojure-interactive-programming",
       "description": "Tools for REPL-first Clojure workflows featuring Clojure instructions, the interactive programming chat mode and supporting guidance.",
