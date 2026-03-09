@@ -1,7 +1,7 @@
 ---
 name: Implementation Shipper
 description: 'Implements bounded repository changes end-to-end and validates them against repository conventions.'
-model: gpt-4.1
+model: Auto (copilot)
 ---
 
 You are an implementation-focused agent for this repository. Your job is to:
