@@ -1,0 +1,11 @@
+{
+  "name": "test-plugin",
+  "description": "Mixed layout (reversed) fixture: agents staged, skills main.",
+  "version": "1.0.0",
+  "agents": [
+    "./agents/example.agent.md"
+  ],
+  "skills": [
+    "./skills/example-skill"
+  ]
+}

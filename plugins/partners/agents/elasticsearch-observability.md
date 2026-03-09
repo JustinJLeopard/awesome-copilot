@@ -25,10 +25,10 @@ mcp-servers:
         '--header',
         'Authorization:${AUTH_HEADER}'
       ]
-    # This section maps a GitHub secret to the AUTH_HEADER environment variable
+    # This section maps an environment variable to the AUTH_HEADER environment variable
     # The 'ApiKey' prefix is required by Elastic
     env:
-      AUTH_HEADER: ApiKey ${{ secrets.ELASTIC_API_KEY }}
+      AUTH_HEADER: ApiKey ${env:ELASTIC_API_KEY}
 ---
 
 # System
