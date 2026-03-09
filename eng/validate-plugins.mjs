@@ -10,7 +10,7 @@ const DEFAULT_PLUGINS_DIR = path.join(DEFAULT_ROOT_FOLDER, "plugins");
 const PATH_FIELDS = ["agents", "skills"];
 const LAYOUT_EXAMPLES = {
   agents: {
-    staged: "./agents/my-agent.md",
+    staged: "./agents/my-agent.agent.md",
     main: "./agents",
   },
   skills: {
@@ -95,6 +95,9 @@ function classifySpecPath(field, relPath) {
   }
 
   if (field === "agents") {
+    if (relPath.startsWith("./agents/") && relPath.endsWith(".agent.md")) {
+      return relPath.length > "./agents/.agent.md".length ? "staged" : null;
+    }
     if (relPath.startsWith("./agents/") && relPath.endsWith(".md")) {
       if (/\/\*\.([\w.]+)$/.test(relPath)) {
         return "main";
