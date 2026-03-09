@@ -1,11 +1,11 @@
 {
   "name": "test-plugin",
-  "description": "Missing staged source fixture.",
+  "description": "Reverse mixed layout fixture (agents=staged, skills=main).",
   "version": "1.0.0",
   "agents": [
     "./agents/example.md"
   ],
   "skills": [
-    "./skills/example-skill/"
+    "./skills/example-skill"
   ]
 }

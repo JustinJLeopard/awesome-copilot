@@ -3,7 +3,7 @@
   "description": "Valid staged fixture.",
   "version": "1.0.0",
   "agents": [
-    "./agents/example.agent.md"
+    "./agents/example.md"
   ],
   "skills": [
     "./skills/example-skill/"
