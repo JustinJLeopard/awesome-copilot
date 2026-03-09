@@ -1,0 +1,15 @@
+{
+  "name": "chat-app-justus",
+  "description": "Starter plugin scaffold for the Chat-App-JustUs project.",
+  "version": "1.0.0",
+  "keywords": [
+    "chat-app",
+    "justus",
+    "messaging"
+  ],
+  "author": {
+    "name": "Justin J Leopard"
+  },
+  "repository": "https://github.com/github/awesome-copilot",
+  "license": "MIT"
+}

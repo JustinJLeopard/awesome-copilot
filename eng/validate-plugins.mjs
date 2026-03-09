@@ -2,9 +2,34 @@
 
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import { ROOT_FOLDER } from "./constants.mjs";
 
-const PLUGINS_DIR = path.join(ROOT_FOLDER, "plugins");
+const DEFAULT_ROOT_FOLDER = ROOT_FOLDER;
+const DEFAULT_PLUGINS_DIR = path.join(DEFAULT_ROOT_FOLDER, "plugins");
+const PATH_FIELDS = ["agents", "skills"];
+const LAYOUT_EXAMPLES = {
+  agents: {
+    staged: "./agents/my-agent.md",
+    main: "./agents",
+  },
+  skills: {
+    staged: "./skills/my-skill/",
+    main: "./skills/my-skill",
+  },
+};
+
+function toDisplayPath(targetPath) {
+  return targetPath.split(path.sep).join("/");
+}
+
+function resolveValidationOptions(options = {}) {
+  const rootFolder = options.rootFolder ?? DEFAULT_ROOT_FOLDER;
+  return {
+    rootFolder,
+    pluginsDir: options.pluginsDir ?? path.join(rootFolder, "plugins"),
+  };
+}
 
 // Validation functions
 function validateName(name, folderName) {
@@ -64,59 +89,161 @@ function validateKeywords(keywords) {
   return null;
 }
 
-function validateSpecPaths(plugin) {
-  const errors = [];
-  const specs = {
-    agents: { prefix: "./agents/", suffix: ".md", repoDir: "agents", repoSuffix: ".agent.md" },
-    skills: { prefix: "./skills/", suffix: "/", repoDir: "skills", repoFile: "SKILL.md" },
-  };
+function classifySpecPath(field, relPath) {
+  if (!relPath.startsWith("./")) {
+    return null;
+  }
 
-  for (const [field, spec] of Object.entries(specs)) {
+  if (field === "agents") {
+    if (relPath.startsWith("./agents/") && relPath.endsWith(".md")) {
+      return relPath.length > "./agents/.md".length ? "staged" : null;
+    }
+    if (relPath === "./agents") {
+      return "main";
+    }
+    if (
+      relPath.startsWith("./agents/") &&
+      !relPath.endsWith("/") &&
+      !relPath.endsWith(".md")
+    ) {
+      return relPath.length > "./agents/".length ? "main" : null;
+    }
+    return null;
+  }
+
+  if (field === "skills") {
+    if (relPath.startsWith("./skills/") && relPath.endsWith("/")) {
+      return relPath.length > "./skills//".length ? "staged" : null;
+    }
+    if (relPath.startsWith("./skills/") && !relPath.endsWith("/")) {
+      return relPath.length > "./skills/".length ? "main" : null;
+    }
+    return null;
+  }
+
+  return null;
+}
+
+function getPathFormatError(field, index) {
+  const examples = LAYOUT_EXAMPLES[field];
+  return `${field}[${index}] must use staged "${examples.staged}" or main "${examples.main}" path syntax`;
+}
+
+function findMarkdownFile(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    return false;
+  }
+
+  for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      return true;
+    }
+    if (entry.isDirectory() && findMarkdownFile(fullPath)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function validateStagedEntry(field, index, relPath, rootFolder, errors) {
+  if (field === "agents") {
+    const basename = relPath.slice("./agents/".length, -".md".length);
+    const srcFile = path.join(rootFolder, "agents", `${basename}.agent.md`);
+    if (!fs.existsSync(srcFile)) {
+      errors.push(
+        `${field}[${index}] source not found: ${toDisplayPath(path.join("agents", `${basename}.agent.md`))}`
+      );
+    }
+    return;
+  }
+
+  const skillName = relPath.slice("./skills/".length, -1);
+  const skillFile = path.join(rootFolder, "skills", skillName, "SKILL.md");
+  if (!fs.existsSync(skillFile)) {
+    errors.push(
+      `${field}[${index}] source not found: ${toDisplayPath(path.join("skills", skillName, "SKILL.md"))}`
+    );
+  }
+}
+
+function validateMainEntry(field, index, relPath, pluginDir, rootFolder, errors) {
+  if (field === "agents") {
+    const materializedDir = path.join(pluginDir, relPath.slice(2));
+    if (!findMarkdownFile(materializedDir)) {
+      errors.push(
+        `${field}[${index}] materialized files not found: ${toDisplayPath(path.relative(rootFolder, materializedDir))}`
+      );
+    }
+    return;
+  }
+
+  const skillFile = path.join(pluginDir, relPath.slice(2), "SKILL.md");
+  if (!fs.existsSync(skillFile)) {
+    errors.push(
+      `${field}[${index}] materialized source not found: ${toDisplayPath(path.relative(rootFolder, skillFile))}`
+    );
+  }
+}
+
+function validateSpecPaths(plugin, options = {}) {
+  const { rootFolder, pluginDir } = options;
+  const errors = [];
+  const entries = [];
+  const layouts = new Set();
+
+  for (const field of PATH_FIELDS) {
     const arr = plugin[field];
     if (arr === undefined) continue;
     if (!Array.isArray(arr)) {
       errors.push(`${field} must be an array`);
       continue;
     }
+
     for (let i = 0; i < arr.length; i++) {
-      const p = arr[i];
-      if (typeof p !== "string") {
+      const relPath = arr[i];
+      if (typeof relPath !== "string") {
         errors.push(`${field}[${i}] must be a string`);
         continue;
       }
-      if (!p.startsWith("./")) {
+      if (!relPath.startsWith("./")) {
         errors.push(`${field}[${i}] must start with "./"`);
         continue;
       }
-      if (!p.startsWith(spec.prefix)) {
-        errors.push(`${field}[${i}] must start with "${spec.prefix}"`);
+
+      const layout = classifySpecPath(field, relPath);
+      if (!layout) {
+        errors.push(getPathFormatError(field, i));
         continue;
       }
-      if (!p.endsWith(spec.suffix)) {
-        errors.push(`${field}[${i}] must end with "${spec.suffix}"`);
-        continue;
-      }
-      // Validate the source file exists at repo root
-      const basename = p.slice(spec.prefix.length, p.length - spec.suffix.length);
-      if (field === "skills") {
-        const skillDir = path.join(ROOT_FOLDER, spec.repoDir, basename);
-        const skillFile = path.join(skillDir, spec.repoFile);
-        if (!fs.existsSync(skillFile)) {
-          errors.push(`${field}[${i}] source not found: ${spec.repoDir}/${basename}/SKILL.md`);
-        }
-      } else {
-        const srcFile = path.join(ROOT_FOLDER, spec.repoDir, basename + spec.repoSuffix);
-        if (!fs.existsSync(srcFile)) {
-          errors.push(`${field}[${i}] source not found: ${spec.repoDir}/${basename}${spec.repoSuffix}`);
-        }
-      }
+
+      layouts.add(layout);
+      entries.push({ field, index: i, relPath, layout });
     }
   }
+
+  if (layouts.size > 1) {
+    errors.push(
+      'plugin mixes staged source paths and main materialized paths; use staged paths like "./agents/my-agent.md" and "./skills/my-skill/", or main paths like "./agents" and "./skills/my-skill"'
+    );
+    return errors;
+  }
+
+  for (const entry of entries) {
+    if (entry.layout === "staged") {
+      validateStagedEntry(entry.field, entry.index, entry.relPath, rootFolder, errors);
+    } else {
+      validateMainEntry(entry.field, entry.index, entry.relPath, pluginDir, rootFolder, errors);
+    }
+  }
+
   return errors;
 }
 
-function validatePlugin(folderName) {
-  const pluginDir = path.join(PLUGINS_DIR, folderName);
+export function validatePlugin(folderName, options = {}) {
+  const { rootFolder, pluginsDir } = resolveValidationOptions(options);
+  const pluginDir = path.join(pluginsDir, folderName);
   const errors = [];
 
   // Rule 1: Must have .github/plugin/plugin.json
@@ -156,22 +283,23 @@ function validatePlugin(folderName) {
   const keywordsError = validateKeywords(plugin.keywords ?? plugin.tags);
   if (keywordsError) errors.push(keywordsError);
 
-  // Rule 6: agents, commands, skills paths
-  const specErrors = validateSpecPaths(plugin);
+  // Rule 6: agents, skills path layouts
+  const specErrors = validateSpecPaths(plugin, { rootFolder, pluginDir });
   errors.push(...specErrors);
 
   return errors;
 }
 
-// Main validation function
-function validatePlugins() {
-  if (!fs.existsSync(PLUGINS_DIR)) {
+export function validatePlugins(options = {}) {
+  const { pluginsDir } = resolveValidationOptions(options);
+
+  if (!fs.existsSync(pluginsDir)) {
     console.log("No plugins directory found - validation skipped");
     return true;
   }
 
   const pluginDirs = fs
-    .readdirSync(PLUGINS_DIR, { withFileTypes: true })
+    .readdirSync(pluginsDir, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
 
@@ -188,7 +316,7 @@ function validatePlugins() {
   for (const dir of pluginDirs) {
     console.log(`Validating ${dir}...`);
 
-    const errors = validatePlugin(dir);
+    const errors = validatePlugin(dir, options);
 
     if (errors.length > 0) {
       console.error(`❌ ${dir}:`);
@@ -214,15 +342,20 @@ function validatePlugins() {
   return !hasErrors;
 }
 
-// Run validation
-try {
-  const isValid = validatePlugins();
-  if (!isValid) {
-    console.error("\n❌ Plugin validation failed");
+function main() {
+  try {
+    const isValid = validatePlugins();
+    if (!isValid) {
+      console.error("\n❌ Plugin validation failed");
+      process.exit(1);
+    }
+    console.log("\n🎉 Plugin validation passed");
+  } catch (error) {
+    console.error(`Error during validation: ${error.message}`);
     process.exit(1);
   }
-  console.log("\n🎉 Plugin validation passed");
-} catch (error) {
-  console.error(`Error during validation: ${error.message}`);
-  process.exit(1);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
 }
