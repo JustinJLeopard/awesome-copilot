@@ -3,7 +3,7 @@
   "description": "Missing staged source fixture.",
   "version": "1.0.0",
   "agents": [
-    "./agents/example.md"
+    "./agents/example.agent.md"
   ],
   "skills": [
     "./skills/example-skill/"
